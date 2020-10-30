@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Oct 27 10:28:08 2020
-Author: Adam Coxson, MPhys Undergrad, The University of Manchester
+Authors: Adam Coxson and Frederik Brooke Barnes, MPhys Undergrads, The University of Manchester
 Project: Automated Electrical Impedance tomography of Graphene
 Module:  component_control
 Dependancies: pyVisa package
@@ -65,4 +65,3 @@ print(rm.list_resources())
 switch = rm.open_resource(switch_address)
 lockin = rm.open_resource(lockin_address)
 
-#goodbye github
