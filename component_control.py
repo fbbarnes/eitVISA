@@ -65,3 +65,18 @@ print(rm.list_resources())
 switch = rm.open_resource(switch_address)
 lockin = rm.open_resource(lockin_address)
 
+#set termination characters
+#switch
+switch.read_termination = '\n' #cytech manual says 'enter' so try \n, \r or combination of both
+switch.write_termination = '\n'
+#lockin
+lockin.read_termination = '\n'
+lockin.read_termination = '\n'
+
+#initialise devices
+#open all switches
+switch.write('C') #C = Clear = open all relays or turn OFF all relays
+switch_status = switch.query('S') #S = Status which can be used on individual switch points, modules, or the entire system. Replies with string eg 0000000 showing 8 closed switches
+#reset lock-in
+#INSERT CODE HERE
+
