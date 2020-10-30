@@ -40,9 +40,29 @@ Termination:
     - Terminate connection.
 
 """
-
+#IMPORT DEPENDENCIES
 import pyvisa
-rm = pyvisa.ResourceManager('@py')
 
+#SET DEVICE IP AND PORT
+#switchboard
+switch_ip = '10.0.0.2' #default for CYTECH IF-6 module as used in VX256 is 10.0.0.2
+switch_port = '23456' #default for CYTECH IF-6 module as used in VX256 is 23
+#lock-in amplifier
+lockin_ip = '192.168.1.420'
+lockin_port = '34567'
+
+#create devices (resources) address strings
+switch_address = 'TCPIP::'+switch_ip+'::'+switch_port+'::'+'SOCKET'
+lockin_address = 'TCPIP::'+lockin_ip+'::'+lockin_port+'::'+'SOCKET'
+
+
+#create resource manager using py-visa backend ('@py') leave empty for NI VISA
+rm = pyvisa.ResourceManager('@py')
+#print available devices (resources)
 print(rm.list_resources())
 
+#connect to devices
+switch = rm.open_resource(switch_address)
+lockin = rm.open_resource(lockin_address)
+
+#hello github
