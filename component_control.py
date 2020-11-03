@@ -87,8 +87,12 @@ lockin.read_termination = '\n'
 switch.write('C') #C = Clear = open all relays or turn OFF all relays
 switch_status = switch.query('S') #S = Status which can be used on individual switch points, modules, or the entire system. Replies with string eg 0000000 showing 8 closed switches
 print(switch_status)
+
 #reset lock-in
-TBSTAT = lockin.query('TBSTAT?') #Query the current 10 MHz timebase ext (0) or int (1)
-print("TBSTAT:", TBSTAT)
+tb_status = lockin.query('TBSTAT?') #Query the current 10 MHz timebase ext (0) or int (1)
+print("Timebase status:", TBSTAT)
+
+phase = lockin.query('PHAS?') #Returns the reference phase in degrees
+print("Reference phase:", phase)
 #INSERT CODE HERE
 
