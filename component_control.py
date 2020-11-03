@@ -146,8 +146,8 @@ lockin.write('CDSP DAT4 FInt')		#set channel 4 to internal reference frequency
 lockin.write("ARNG") #auto range 
 lockin.write("ASCL") #auto scale
 
-r, theta, samp, fint = lockin.write('SNAPD?') #get snapshot of data from all channels as spcified by CDSP (DAT1, DAT2, DAT3, DAT4)
-print(r, theta, samp, fint)
+measurement = lockin.write('SNAPD?') #get snapshot of data from all channels as spcified by CDSP (DAT1, DAT2, DAT3, DAT4)
+print(measurement)
 #get X
 x = lockin.query('OUTP? X')
 print("X:",x)
