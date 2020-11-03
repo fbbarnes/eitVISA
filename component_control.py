@@ -42,6 +42,8 @@ Termination:
 """
 #IMPORT DEPENDENCIES
 import pyvisa
+import numpy as np
+import time
 
 #SET DEVICE IP AND PORT
 #lock-in amplifier
@@ -79,8 +81,61 @@ lockin = rm.open_resource(lockin_address)
 switch.read_termination = '\n' #cytech manual says 'enter' so try \n, \r or combination of both
 switch.write_termination = '\n'
 #lockin
-lockin.read_termination = '\n'
-lockin.read_termination = '\n'
+#lockin.read_termination = '\f' #SR860 manual says \lf so \f seems to be equivalent in python)
+lockin.write_termination = '\f'
+
+def SetMeasurementParameters(parameters):
+
+	'''
+	Input: list of strings
+	Ouput: None
+	Assigns a parameter to data channel for each parameter given in array of strings. 
+	If fewer than 4 parameters are given, the remaining channels will not be changed from previous state.
+	The parameter list is
+	i enumeration
+	0 X
+	1 Y
+	2 R
+	3 THeta
+	4 IN1
+	5 IN2
+	6 IN3
+	7 IN4
+	8 XNOise
+	9 YNOise
+	10 OUT1
+	11 OUT2
+	12 PHAse 
+	13 SAMp 
+	14 LEV el 
+	15 FInt 
+	16 FExt
+
+	'''
+	if parameters == None:
+		parameters = ["R","THeta","SAMp","FInt"]
+		
+	channel = 1
+	for i in range(0, min(4, len(parameters))):
+		lockin.write('CDSP DAT'+str(channel)+", "+str(parameters[i])) #The CDSP j, param command assigns a parameter to data channel j. This is the same parameter assignment as pressing the [Config] key.
+		channel += 1
+	return
+
+def GetMeasurement(parameters=None, param_set=True):
+
+	'''
+	Input 
+	parameters: List of strings(optional) corresponding to parameters desired to be measured by lock-in SR860. If none, defaults to R, THeta, SAMp, FInt
+	param_set: Boolean. If true, set the parameters to be measured. If false, take measurement using previously set parameters (Speeds up measurement by ~0.03s)
+	Output 
+	measurement_array: Numpy array of floats corresponding to mesaurment values in Volts, Hz or Degrees.
+	'''
+	if param_set == True:
+		SetMeasurementParameters(parameters)
+	measurement = lockin.query('SNAPD?')
+	measurment_array = np.fromstring(measurement, sep=',')
+
+	return measurment_array
 
 #initialise devices
 #open all switches
@@ -91,6 +146,7 @@ switch.write('L3 5')
 print(switch.query('S'))
 
 #reset lock-in
+print("resetting lock-in")
 #check timebase is internal
 tb_status = lockin.query('TBSTAT?') #Query the current 10 MHz timebase ext (0) or int (1)
 print("Timebase status:", tb_status)
@@ -113,28 +169,6 @@ lockin.write('SLVL '+str(VOUT_INIT)) #Set the sine out amplitude to FREQ_INIT in
 vout = lockin.query('SLVL?') #Returns the sine out amplitude in Volts
 print("Sine out amplitude: ", vout)
 
-'''
-#set channels
-lockin.write("COUT OCH1, XY") #Set CH1 to X
-lockin.write("COUT OCH2, XY") #Set CH2 to Y
-
-x = lockin.query("COUT? OCH1") #Returns the CH1 output X
-y = lockin.query("COUT? OCH2") #Returns the CH2 output Y
-
-print('x:', x)
-print('y:', y)
-
-
-
-lockin.write("COUT OCH1, RTheta") #Set CH1 to X
-lockin.write("COUT OCH2, RTheta") #Set CH2 to Y
-
-r = lockin.query("COUT? OCH1") #Returns the CH1 output X
-theta = lockin.query("COUT? OCH2") #Returns the CH2 output Y
-
-print('r:', x)
-print('theta:', y)
-'''
 
 #Assign parameters to data channels. Lock-in is capable or reading 4 data points simultaneously. 
 lockin.write('CDSP DAT1 R') 		#set channel 1 to R
@@ -146,25 +180,24 @@ lockin.write('CDSP DAT4 FInt')		#set channel 4 to internal reference frequency
 lockin.write("ARNG") #auto range 
 lockin.write("ASCL") #auto scale
 
-measurement = lockin.write('SNAPD?') #get snapshot of data from all channels as spcified by CDSP (DAT1, DAT2, DAT3, DAT4)
-print(measurement)
-#get X
-x = lockin.query('OUTP? X')
-print("X:",x)
 
-#get Y
-y = lockin.query('OUTP? Y')
-print("Y:",y)
+	
 
-#get R
-r = lockin.query('OUTP? R')
-print("R:",r)
+params = ["X", "Y", "OUT1", "OUT2"]
+SetMeasurementParameters(params)
+start_false = time.time()
+data = GetMeasurement(param_set=False)
+end_false=time.time()
+time_false = -(start_false-end_false)
+print("Time to get measurement without setting params:", time_false)
 
-#get THETA
-theta = lockin.query('OUTP? theta')
-print("THETA:",theta)
-
-
+print(data)
+start_true = time.time()
+data = GetMeasurement()
+end_true=time.time()
+time_true = end_true - start_true
+print("Time to get measurement with setting params:", time_true)
+print(data)
 
 #INSERT CODE HERE
 
