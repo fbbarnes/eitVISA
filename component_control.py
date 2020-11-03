@@ -111,5 +111,15 @@ lockin.write('SLVL '+str(VOUT_INIT)) #Set the sine out amplitude to FREQ_INIT in
 vout = lockin.query('SLVL?') #Returns the sine out amplitude in Volts
 print("Sine out amplitude: ", vout)
 
+#set channels
+lockin.write("COUT OCH1, XY") #Set CH1 to X
+lockin.write("COUT OCH2, XY") #Set CH2 to Y
+
+x = lockin.query("COUT? OCH1") #Returns the CH1 output X
+y = lockin.query("COUT? OCH2") #Returns the CH2 output Y
+
+print('x:', x)
+print('y:', y)
+
 #INSERT CODE HERE
 
