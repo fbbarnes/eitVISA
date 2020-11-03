@@ -89,10 +89,27 @@ switch_status = switch.query('S') #S = Status which can be used on individual sw
 print(switch_status)
 
 #reset lock-in
+#check timebase is internal
 tb_status = lockin.query('TBSTAT?') #Query the current 10 MHz timebase ext (0) or int (1)
-print("Timebase status:", TBSTAT)
+print("Timebase status:", tb_status)
 
+#set reference phase
+PHASE_INIT = 0
+lockin.write('PHAS '+str(PHASE_INIT)) #Set the reference phase to PHASE_INIT
 phase = lockin.query('PHAS?') #Returns the reference phase in degrees
 print("Reference phase:", phase)
+
+#set frequency
+FREQ_INIT = 1e4
+lockin.write('FREQ '+str(FREQ_INIT)) #Set the internal frequency to FREQ_INIT
+freq = lockin.query('PHAS?') #Returns the internal frequency in Hz
+print("Frequency: ", freq)
+
+#set sine out voltage
+VOUT_INIT = 0.5
+lockin.write('SLVL '+str(VOUT_INIT)) #Set the sine out amplitude to FREQ_INIT in Volts The amplitude may be programmed from 1 nV to 2.0V
+vout = lockin.query('SLVL?') #Returns the sine out amplitude in Volts
+print("Sine out amplitude: ", vout)
+
 #INSERT CODE HERE
 
