@@ -136,11 +136,18 @@ print('r:', x)
 print('theta:', y)
 '''
 
+#Assign parameters to data channels. Lock-in is capable or reading 4 data points simultaneously. 
+lockin.write('CDSP DAT1 R') 		#set channel 1 to R
+lockin.write('CDSP DAT2 THetha')	#set channel 2 to theta
+lockin.write('CDSP DAT3 SAMp')		#set channel 3 to sine out amplitude
+lockin.write('CDSP DAT4 FInt')		#set channel 4 to internal reference frequency
+
+#Auto adjust range and scaling of measurements
 lockin.write("ARNG") #auto range 
 lockin.write("ASCL") #auto scale
 
-#CDSP
-
+r, theta, samp, fint = lockin.write('SNAPD?') #get snapshot of data from all channels as spcified by CDSP (DAT1, DAT2, DAT3, DAT4)
+print(r, theta, samp, fint)
 #get X
 x = lockin.query('OUTP? X')
 print("X:",x)
