@@ -57,7 +57,7 @@ switch_port = '23456' #default for CYTECH IF-6 module as used in VX256 is 23
 
 #SET DEVICE GPIB ADDRESS
 #switchboard
-switch_primary_address = 7
+switch_primary_address = '7'
 
 
 #create devices (resources) address strings
@@ -66,7 +66,7 @@ lockin_address = 'TCPIP::'+lockin_ip+'::'+lockin_lan_devicename+'::'+'INSTR'
 
 
 #create resource manager using py-visa backend ('@py') leave empty for NI VISA
-rm = pyvisa.ResourceManager('@py')
+rm = pyvisa.ResourceManager()
 #print available devices (resources)
 print(rm.list_resources())
 
