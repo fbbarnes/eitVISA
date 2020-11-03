@@ -44,16 +44,25 @@ Termination:
 import pyvisa
 
 #SET DEVICE IP AND PORT
+#lock-in amplifier
+lockin_ip = '169.254.147.1'
+lockin_port = '1865'  #By default, the port is 1865 for the SR860.
+lockin_lan_devicename = 'inst0' #By default, this is inst0. Check NI MAX
+
 #switchboard
+''' SWITCH USED IS ACCESSED VIA GPIB NOT LAN
 switch_ip = '10.0.0.2' #default for CYTECH IF-6 module as used in VX256 is 10.0.0.2
 switch_port = '23456' #default for CYTECH IF-6 module as used in VX256 is 23
-#lock-in amplifier
-lockin_ip = '192.168.1.420'
-lockin_port = '34567'
+'''
+
+#SET DEVICE GPIB ADDRESS
+#switchboard
+switch_primary_address = 7
+
 
 #create devices (resources) address strings
-switch_address = 'TCPIP::'+switch_ip+'::'+switch_port+'::'+'SOCKET'
-lockin_address = 'TCPIP::'+lockin_ip+'::'+lockin_port+'::'+'SOCKET'
+switch_address = 'GPIB0::'+switch_primary_address+'::INSTR'
+lockin_address = 'TCPIP::'+lockin_ip+'::'+lockin_lan_devicename+'::'+'INSTR'
 
 
 #create resource manager using py-visa backend ('@py') leave empty for NI VISA
