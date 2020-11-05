@@ -43,7 +43,9 @@ Termination:
 #IMPORT DEPENDENCIES
 import pyvisa
 import numpy as np
+from numpy import random
 import time
+from selection_algorithms import *
 
 #SET DEVICE IP AND PORT
 #lock-in amplifier
@@ -158,12 +160,131 @@ def FlickSwitch(state, module, relay):
 	
 	return 
 
-def MapSwitches()
-	''''
-	given a lock-in connection ("sine+","sine-","v+","v-") and electrode number (int)
-	returns a 2x4 array of 
+def MapSwitches(electrode, lockin_connection):
+	'''
+	given a lock-in connection ("sin+" or 0,"sin-" or 1,"v+" or 2,"v-" or 3) and electrode number (int)
+	returns module and relay numbers
+	'''
+	if lockin_connection is str:
+		lockin_connection = {'sin+':0, 'sin-':1, 'v+':2, 'v-':3}
+
+	relay = electrode % 16
+	module = ( electrode // 16 ) + lockin_connection
+
+
+	return module, relay
+
+def ClearSwitches():
+
+	switch.write('C')
+
+	return
+
+def eit_scan_lines(ne=16, dist=1):
+    """
+
+	TAKEN FROM pyeit.eit.utils.py
+
+    generate scan matrix
+    Parameters
+    ----------
+    ne: int
+        number of electrodes
+    dist: int
+        distance between A and B (default=1)
+    Returns
+    -------
+    ex_mat: NDArray
+        stimulation matrix
+    Notes
+    -----
+    in the scan of EIT (or stimulation matrix), we use 4-electrodes
+    mode, where A, B are used as positive and negative stimulation
+    electrodes and M, N are used as voltage measurements
+    1 (A) for positive current injection,
+    -1 (B) for negative current sink
+    dist is the distance (number of electrodes) of A to B
+    in 'adjacent' mode, dist=1, in 'apposition' mode, dist=ne/2
+    Examples
+    --------
+    # let the number of electrodes, ne=16
+    if mode=='neighbore':
+        ex_mat = eit_scan_lines()
+    elif mode=='apposition':
+        ex_mat = eit_scan_lines(dist=8)
+    WARNING
+    -------
+    ex_mat is a local index, where it is ranged from 0...15, within the range
+    of the number of electrodes. In FEM applications, you should convert ex_mat
+    to global index using the (global) el_pos parameters.
+    """
+    ex = np.array([[i, np.mod(i + dist, ne)] for i in range(ne)])
+
+    return ex
+
+
+def GetNextElectrodes(*algorithm_parameters, algorithm='Standard', no_electrodes=32, measurement):
+
+	'''
+	Returns electrode connections (eg sin+:2, sin-:1, v+: 18, v-:17 given algorithm used 
+	and required information eg measurement no. or previous measurement. In order of sin+, sin-, v+, v-.
+	If a list of electrodes are already given, it simply returns the nth element in that array. 
 	'''
 
+	if algorithm == 'Standard':
+		all_measurement_electrodes = algorithm_parameters[0]
+
+		if all_measurement_electrodes == None:
+				all_measurement_electrodes = Standard(no_electrodes, step=1, parser=None)
+
+		next_electrodes = all_measurement_electrodes[measurement]
+
+
+	if algorithm == 'random':
+		rng = random.default_rng()
+		next_electrodes = rng.choice(15, size=4, replace=False)
+
+	return next_electrodes
+
+def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measurement_electrodes = None, **algorithm_parameters):
+
+    ClearSwitches()
+
+
+    #standard_measurement_electrodes = Standard(no_electrodes=6, step=1,parser='fmmu')
+
+    #print(standard_measurement_electrodes)
+
+
+    keep_measuring = True
+
+    if max_measurements == None:
+        max_measurements = 10000
+
+    v_difference = []
+
+    while keep_measuring == True:
+        for i in range(0,max_measurements):
+
+            next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i)
+            print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
+            if keep_measuring == False:
+                break
+            print(next_electrodes)
+            ClearSwitches()
+            for i in next_electrodes:
+                FlickSwitch('on', MapSwitches(electrode=next_electrodes[i], lockin_connection=i))
+            r, theta, samp, fint = GetMeasurement(param_set=False)
+            v_difference.append(r)
+        v_difference = np.array(v_diff)
+
+    return v_difference
+
+print(RunEIT(no_electrodes=6, max_measurements=100))
+
+
+
+'''
 #initialise devices
 #open all switches
 switch.write('C') #C = Clear = open all relays or turn OFF all relays
@@ -192,7 +313,7 @@ print("Frequency: ", freq)
 
 #set sine out voltage
 VOUT_INIT = 0.5
-lockin.write('SLVL '+str(VOUT_INIT)) #Set the sine out amplitude to FREQ_INIT in Volts The amplitude may be programmed from 1 nV to 2.0V
+lockin.write('SLVL '+str(VOUT_INIT)) #Set the sine out amplitude to VOUT_INT in Volts The amplitude may be programmed from 1 nV to 2.0V
 vout = lockin.query('SLVL?') #Returns the sine out amplitude in Volts
 print("Sine out amplitude: ", vout)
 
@@ -228,3 +349,4 @@ print(data)
 
 #INSERT CODE HERE
 
+'''
