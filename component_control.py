@@ -230,7 +230,7 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 	ClearSwitches()
 
 
-	#standard_measurement_electrodes = Standard(no_electrodes=6, step=1,parser='fmmu')
+	standard_measurement_electrodes = Standard(no_electrodes=no_electrodes, step=1,parser='fmmu')
 
 	#print(standard_measurement_electrodes)
 
@@ -241,29 +241,67 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 		max_measurements = 10000
 
 	v_diff = []
+	flick_times = []
+	get_times = []
 
 	while keep_measuring == True:
 		for i in range(0,max_measurements):
 
-			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i)
-			print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
+			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i, all_measurement_electrodes = standard_measurement_electrodes)
+			#print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
 			if keep_measuring == False:
 				break
-			print(next_electrodes)
+			#print(next_electrodes)
+			start_clear = time.time()
 			ClearSwitches()
+			end_clear = time.time()
+			clear_time = end_clear - start_clear
+			flick_times.append(clear_time)
 			for i in range(0, len(next_electrodes)):
 				module, relay = MapSwitches(electrode=next_electrodes[i], lockin_connection=i)
+				start_flick = time.time()
 				FlickSwitch('on', module, relay)
+				end_flick = time.time()
+				flick_time = end_flick - start_flick
+				flick_times.append(flick_time)
+			start_get =time.time()
 			r, theta, samp, fint = GetMeasurement(param_set=False)
+			end_get = time.time()
+			get_time = end_get - start_get
+			get_times.append(get_time)
 			v_diff.append(r)
+		
 		v_difference = np.array(v_diff)
+		
+		flick_times_np = np.array(flick_times)
+		get_times_np = np.array(get_times)
 		break
 
-	return v_difference
+	return v_difference, flick_times_np, get_times_np
 
-print(RunEIT(no_electrodes=6, max_measurements=120))
+start = time.time()
+voltages, switch_times, lockin_times = RunEIT(no_electrodes=32, max_measurements=1000)
+end = time.time()
+duration = end - start
+no_voltages = len(voltages)
+average_time = duration / no_voltages
+print("Voltages: ", voltages)
+print(str(no_voltages)+" measurements taken in "+str(duration)+" seconds.")
+print("Average time for measurement: ", average_time)
 
+total_switch_time = np.sum(switch_times)
+average_switch_time = np.mean(switch_times)
 
+print("switch commands: ", len(switch_times))
+print("Total switch time", total_switch_time)
+print("Average switch time", average_switch_time)
+
+total_lockin_time = np.sum(lockin_times)
+average_lockin_time = np.mean(lockin_times)
+
+print("Lock-in commands: ", len(lockin_times))
+print("Total lock-in time", total_lockin_time)
+print("Average lock-in time", average_lockin_time)
 
 '''
 #initialise devices

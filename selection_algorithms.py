@@ -115,7 +115,7 @@ def Standard(no_electrodes, step=1, parser=None):
         no_electrodes array*4 array of electrode numbers in the order ABMN aka 
         sin+, sin-, v+, v-
     '''
-    print(parser)
+    #print(parser)
     scan_lines = eit_scan_lines(no_electrodes)
 
 
@@ -140,13 +140,13 @@ def GetNextElectrodes(algorithm='Standard', no_electrodes=32, all_measurement_el
     not_last_measurement = True
     next_electrodes = np.zeros(4)
 
-    print(algorithm_parameters)
+    #print(algorithm_parameters)
     if algorithm == 'Standard':
 
-        if all_measurement_electrodes == None:
-            all_measurement_electrodes = Standard(no_electrodes, **algorithm_parameters)
+        #if all_measurement_electrodes == None:
+            #all_measurement_electrodes = Standard(no_electrodes, **algorithm_parameters)
 
-        if measurement >= len(all_measurement_electrodes) :
+        if measurement >= len(all_measurement_electrodes):
             not_last_measurement = False
             
         if not_last_measurement == True:
