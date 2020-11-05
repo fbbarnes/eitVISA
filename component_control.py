@@ -137,6 +137,33 @@ def GetMeasurement(parameters=None, param_set=True):
 
 	return measurment_array
 
+def FlickSwitch(state, module, relay):
+
+	'''
+	input: state(string or int), module(int), relay(int)
+	output: sends message to switchbox to change state of switch according to 
+	state given by string ('on' or 'off') or int (0 or 1). Switch corresponds to
+	relay within module.
+	'''
+
+	if state == 1 or state=='on':
+		state_str = "L"
+	elif state == 0 or state=='off':
+		state_str = "U"
+	else:
+		print("Must include switch state. 0(open) 1(closed)")
+		return
+	
+	switch.write(state_str+str(module)+" "+str(relay))
+	
+	return 
+
+def MapSwitches()
+	''''
+	given a lock-in connection ("sine+","sine-","v+","v-") and electrode number (int)
+	returns a 2x4 array of 
+	'''
+
 #initialise devices
 #open all switches
 switch.write('C') #C = Clear = open all relays or turn OFF all relays
