@@ -12,17 +12,17 @@ This uses GPIB commands.
 
 So far it is just a skeleton
 Setup:
-    - Connect to device and do initial compatibility checks.
-    - Allocate electrode position identifiers to the corresponding switch contacts.
+	- Connect to device and do initial compatibility checks.
+	- Allocate electrode position identifiers to the corresponding switch contacts.
 
 Electrode switch algorithm:
-    Main outer loop over the 32 electrodes for the driving current pairs:
-    	- Switch to new contact pair
-    	- Check and verify current contacts are open and active.
-    	- Activate contacts to drive current between contacts.
-    	- Apply delay required for lock-in amplifier to cycle up.
-    	- Perform inner voltage loop as defined below.
-    	- Terminate driving current and close contacts, write outputs to file.
+	Main outer loop over the 32 electrodes for the driving current pairs:
+		- Switch to new contact pair
+		- Check and verify current contacts are open and active.
+		- Activate contacts to drive current between contacts.
+		- Apply delay required for lock-in amplifier to cycle up.
+		- Perform inner voltage loop as defined below.
+		- Terminate driving current and close contacts, write outputs to file.
 
 	Inner loop over the remaining 30 electrodes for voltage pair measurements:
 		- Switch to a new voltage pair.
@@ -34,10 +34,10 @@ Electrode switch algorithm:
 		- Output voltage measurement and write to file.
 	
 Termination:
-    After the current and voltage electrode loops, one needs to manually ensure the system is shut down.
-    - Check status of each contact, ensure all are closed.
-    - Write all final data out to file and save.
-    - Terminate connection.
+	After the current and voltage electrode loops, one needs to manually ensure the system is shut down.
+	- Check status of each contact, ensure all are closed.
+	- Write all final data out to file and save.
+	- Terminate connection.
 
 """
 #IMPORT DEPENDENCIES
@@ -181,106 +181,87 @@ def ClearSwitches():
 	return
 
 def eit_scan_lines(ne=16, dist=1):
-    """
+	"""
 
 	TAKEN FROM pyeit.eit.utils.py
 
-    generate scan matrix
-    Parameters
-    ----------
-    ne: int
-        number of electrodes
-    dist: int
-        distance between A and B (default=1)
-    Returns
-    -------
-    ex_mat: NDArray
-        stimulation matrix
-    Notes
-    -----
-    in the scan of EIT (or stimulation matrix), we use 4-electrodes
-    mode, where A, B are used as positive and negative stimulation
-    electrodes and M, N are used as voltage measurements
-    1 (A) for positive current injection,
-    -1 (B) for negative current sink
-    dist is the distance (number of electrodes) of A to B
-    in 'adjacent' mode, dist=1, in 'apposition' mode, dist=ne/2
-    Examples
-    --------
-    # let the number of electrodes, ne=16
-    if mode=='neighbore':
-        ex_mat = eit_scan_lines()
-    elif mode=='apposition':
-        ex_mat = eit_scan_lines(dist=8)
-    WARNING
-    -------
-    ex_mat is a local index, where it is ranged from 0...15, within the range
-    of the number of electrodes. In FEM applications, you should convert ex_mat
-    to global index using the (global) el_pos parameters.
-    """
-    ex = np.array([[i, np.mod(i + dist, ne)] for i in range(ne)])
+	generate scan matrix
+	Parameters
+	----------
+	ne: int
+		number of electrodes
+	dist: int
+		distance between A and B (default=1)
+	Returns
+	-------
+	ex_mat: NDArray
+		stimulation matrix
+	Notes
+	-----
+	in the scan of EIT (or stimulation matrix), we use 4-electrodes
+	mode, where A, B are used as positive and negative stimulation
+	electrodes and M, N are used as voltage measurements
+	1 (A) for positive current injection,
+	-1 (B) for negative current sink
+	dist is the distance (number of electrodes) of A to B
+	in 'adjacent' mode, dist=1, in 'apposition' mode, dist=ne/2
+	Examples
+	--------
+	# let the number of electrodes, ne=16
+	if mode=='neighbore':
+		ex_mat = eit_scan_lines()
+	elif mode=='apposition':
+		ex_mat = eit_scan_lines(dist=8)
+	WARNING
+	-------
+	ex_mat is a local index, where it is ranged from 0...15, within the range
+	of the number of electrodes. In FEM applications, you should convert ex_mat
+	to global index using the (global) el_pos parameters.
+	"""
+	ex = np.array([[i, np.mod(i + dist, ne)] for i in range(ne)])
 
-    return ex
-
-
-def GetNextElectrodes(*algorithm_parameters, algorithm='Standard', no_electrodes=32, measurement):
-
-	'''
-	Returns electrode connections (eg sin+:2, sin-:1, v+: 18, v-:17 given algorithm used 
-	and required information eg measurement no. or previous measurement. In order of sin+, sin-, v+, v-.
-	If a list of electrodes are already given, it simply returns the nth element in that array. 
-	'''
-
-	if algorithm == 'Standard':
-		all_measurement_electrodes = algorithm_parameters[0]
-
-		if all_measurement_electrodes == None:
-				all_measurement_electrodes = Standard(no_electrodes, step=1, parser=None)
-
-		next_electrodes = all_measurement_electrodes[measurement]
+	return ex
 
 
-	if algorithm == 'random':
-		rng = random.default_rng()
-		next_electrodes = rng.choice(15, size=4, replace=False)
 
-	return next_electrodes
 
 def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measurement_electrodes = None, **algorithm_parameters):
 
-    ClearSwitches()
+	ClearSwitches()
 
 
-    #standard_measurement_electrodes = Standard(no_electrodes=6, step=1,parser='fmmu')
+	#standard_measurement_electrodes = Standard(no_electrodes=6, step=1,parser='fmmu')
 
-    #print(standard_measurement_electrodes)
+	#print(standard_measurement_electrodes)
 
 
-    keep_measuring = True
+	keep_measuring = True
 
-    if max_measurements == None:
-        max_measurements = 10000
+	if max_measurements == None:
+		max_measurements = 10000
 
-    v_difference = []
+	v_diff = []
 
-    while keep_measuring == True:
-        for i in range(0,max_measurements):
+	while keep_measuring == True:
+		for i in range(0,max_measurements):
 
-            next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i)
-            print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
-            if keep_measuring == False:
-                break
-            print(next_electrodes)
-            ClearSwitches()
-            for i in next_electrodes:
-                FlickSwitch('on', MapSwitches(electrode=next_electrodes[i], lockin_connection=i))
-            r, theta, samp, fint = GetMeasurement(param_set=False)
-            v_difference.append(r)
-        v_difference = np.array(v_diff)
+			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i)
+			print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
+			if keep_measuring == False:
+				break
+			print(next_electrodes)
+			ClearSwitches()
+			for i in range(0, len(next_electrodes)):
+				module, relay = MapSwitches(electrode=next_electrodes[i], lockin_connection=i)
+				FlickSwitch('on', module, relay)
+			r, theta, samp, fint = GetMeasurement(param_set=False)
+			v_diff.append(r)
+		v_difference = np.array(v_diff)
+		break
 
-    return v_difference
+	return v_difference
 
-print(RunEIT(no_electrodes=6, max_measurements=100))
+print(RunEIT(no_electrodes=6, max_measurements=120))
 
 
 
