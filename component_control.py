@@ -90,16 +90,16 @@ def SetMeasurementParameters(parameters):
 
 	'''
 	Inputs
-    ------
+	------
 	parameters: list of str or int
 		parameters desired to be measured
 
 	Outputs
-    ------
+	------
 	None
 
 	Notes
-    ------
+	------
 	Assigns a parameter to data channel of SR860 lock-in for each parameter given in array of strings. 
 	If fewer than 4 parameters are given, the remaining channels will not be changed from previous state.
 	The parameter list is
