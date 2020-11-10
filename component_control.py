@@ -230,7 +230,7 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 	ClearSwitches()
 
 
-	standard_measurement_electrodes = Standard(no_electrodes=no_electrodes, step=1,parser='fmmu')
+	#standard_measurement_electrodes = Standard(no_electrodes=no_electrodes, step=1,parser='fmmu')
 
 	#print(standard_measurement_electrodes)
 
@@ -247,7 +247,7 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 	while keep_measuring == True:
 		for i in range(0,max_measurements):
 
-			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i, all_measurement_electrodes = standard_measurement_electrodes)
+			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i, all_measurement_electrodes = None)
 			#print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
 			if keep_measuring == False:
 				break
@@ -280,7 +280,7 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 	return v_difference, flick_times_np, get_times_np
 
 start = time.time()
-voltages, switch_times, lockin_times = RunEIT(no_electrodes=32, max_measurements=1000)
+voltages, switch_times, lockin_times = RunEIT(no_electrodes=8, algorithm='Random', max_measurements=100)
 end = time.time()
 duration = end - start
 no_voltages = len(voltages)
