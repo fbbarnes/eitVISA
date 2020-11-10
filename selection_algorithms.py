@@ -137,6 +137,28 @@ def GetNextElectrodes(algorithm='Standard', no_electrodes=32, all_measurement_el
     and required information eg measurement no. or previous measurement. In order of sin+, sin-, v+, v-.
     If a list of electrodes are already given, it simply returns the nth element in that array. 
     '''
+        '''
+    Inputs
+    ------
+    algorithm: str
+        Electrode selection algorithm to be used
+    no_electrodes: int
+        Number of electrodes
+    all_measurement_electrodes: NDarray
+        A 4*N array of electrode positions for all measurements. Allows user to pre-generate desired electrode positions instead of using algorithm.
+        Helps to speed up when using Standard algorithm.
+    measurement: 0
+        Specifies which measurement the EIT process is on.
+    algorithm_parameters: **kwargs
+        Allows user to pass relevant parameters of desired algorithm
+    
+    Output
+    ------
+    next_electrodes: NDarray
+        4*N array of electrode positions to take next measurement from
+    not_last_measurement: bool
+        If no more measurements should be taken not_last_measurement=False, otherwise if more measurements should be taken not_last_measurement=True
+    '''
     not_last_measurement = True
     next_electrodes = np.zeros(4)
 
