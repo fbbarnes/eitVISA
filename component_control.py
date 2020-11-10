@@ -89,9 +89,18 @@ lockin.write_termination = '\f'
 def SetMeasurementParameters(parameters):
 
 	'''
-	Input: list of strings
-	Ouput: None
-	Assigns a parameter to data channel for each parameter given in array of strings. 
+	Inputs
+    ------
+	parameters: list of str or int
+		parameters desired to be measured
+
+	Outputs
+    ------
+	None
+
+	Notes
+    ------
+	Assigns a parameter to data channel of SR860 lock-in for each parameter given in array of strings. 
 	If fewer than 4 parameters are given, the remaining channels will not be changed from previous state.
 	The parameter list is
 	i enumeration
@@ -126,11 +135,19 @@ def SetMeasurementParameters(parameters):
 def GetMeasurement(parameters=None, param_set=True):
 
 	'''
-	Input 
-	parameters: List of strings(optional) corresponding to parameters desired to be measured by lock-in SR860. If none, defaults to R, THeta, SAMp, FInt
-	param_set: Boolean. If true, set the parameters to be measured. If false, take measurement using previously set parameters (Speeds up measurement by ~0.03s)
-	Output 
-	measurement_array: Numpy array of floats corresponding to mesaurment values in Volts, Hz or Degrees.
+	Inputs
+    ------ 
+	parameters: list of str 
+		corresponding to parameters desired to be measured by lock-in SR860. If none, defaults to R, THeta, SAMp, FInt
+	param_set: bool. 
+		If true, set the parameters to be measured. If false, take measurement using previously set parameters (Speeds up measurement by ~0.03s)
+	Outputs
+    ------  
+	measurement_array: NDarray
+		Array of floats corresponding to mesaurment values in Volts, Hz or Degrees. Ordered in same order as specified in parameters.
+	Notes
+    ------
+	Uses SNAPD? lockin-command
 	'''
 	if param_set == True:
 		SetMeasurementParameters(parameters)
@@ -142,8 +159,22 @@ def GetMeasurement(parameters=None, param_set=True):
 def FlickSwitch(state, module, relay):
 
 	'''
-	input: state(string or int), module(int), relay(int)
-	output: sends message to switchbox to change state of switch according to 
+	Inputs
+    ------  
+	state: str or int
+		State to change switch to. 'on' (0) or 'off' (1).
+	module: int
+		Module number desired switch is in. 
+	relay: int
+		Relay(aka switch) number of desired switch within module.
+
+	Outputs
+    ------  
+	None
+
+	Notes
+    ------  
+	Sends message to switchbox to change state of switch according to 
 	state given by string ('on' or 'off') or int (0 or 1). Switch corresponds to
 	relay within module.
 	'''
@@ -162,8 +193,19 @@ def FlickSwitch(state, module, relay):
 
 def MapSwitches(electrode, lockin_connection):
 	'''
-	given a lock-in connection ("sin+" or 0,"sin-" or 1,"v+" or 2,"v-" or 3) and electrode number (int)
-	returns module and relay numbers
+	Inputs
+    ------ 
+	electrode: int
+		Electrode number corresponding to numbering on output of switchbox.
+	lockin_connection: str or int
+		Relevant lock-in connnection ("sin+" or 0,"sin-" or 1,"v+" or 2,"v-" or 3)
+
+	Outputs
+    ------ 
+	module: int
+		Module number corresponding to relay needed to connect electrode to lockin_connection
+	relay: int
+		Relay number within module needed to connect electrode to lockin_connection
 	'''
 	if lockin_connection is str:
 		lockin_connection = {'sin+':0, 'sin-':1, 'v+':2, 'v-':3}
@@ -175,6 +217,9 @@ def MapSwitches(electrode, lockin_connection):
 	return module, relay
 
 def ClearSwitches():
+	'''
+	Opens all switches in switchbox
+	'''
 
 	switch.write('C')
 
@@ -226,6 +271,30 @@ def eit_scan_lines(ne=16, dist=1):
 
 
 def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measurement_electrodes = None, **algorithm_parameters):
+
+		'''
+	Inputs
+    ------ 
+	algorithm: str
+		Specifies electrode selection agolrithm. eg 'Standard' for adj-adj or 'Random' for radnom electrode placements. 
+	no_electrodes: int
+		Number of electrodes attached to sample
+	max_measurements: int
+		Maximum voltage measurements to be taken
+	measurement_electrodes: NDarray
+        A 4*N array of electrode positions for all measurements. Allows user to pre-generate desired electrode positions instead of using algorithm.
+        Helps to speed up when using Standard algorithm.
+	algorithm_parameters: **kwargs
+        Allows user to pass relevant parameters of desired algorithm
+	Outputs
+    ------ 
+	v_difference: NDarray
+		1*N float array of all voltage measurements taken
+	flick_times_np: NDarray 
+		Float array of all time durations during which a switch command was executed
+	get_times_np: NDarray
+		Float array of all time durations during which a lock-in command was executed
+	'''
 
 	ClearSwitches()
 
