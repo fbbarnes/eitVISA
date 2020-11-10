@@ -272,7 +272,8 @@ def eit_scan_lines(ne=16, dist=1):
 
 def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measurement_electrodes = None, **algorithm_parameters):
 
-		'''
+
+	'''
 	Inputs
 	------ 
 	algorithm: str
@@ -282,10 +283,10 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 	max_measurements: int
 		Maximum voltage measurements to be taken
 	measurement_electrodes: NDarray
-        A 4*N array of electrode positions for all measurements. Allows user to pre-generate desired electrode positions instead of using algorithm.
-        Helps to speed up when using Standard algorithm.
+		A 4*N array of electrode positions for all measurements. Allows user to pre-generate desired electrode positions instead of using algorithm.
+		Helps to speed up when using Standard algorithm.
 	algorithm_parameters: **kwargs
-        Allows user to pass relevant parameters of desired algorithm
+		Allows user to pass relevant parameters of desired algorithm
 	Outputs
 	------ 
 	v_difference: NDarray
@@ -296,6 +297,7 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 		Float array of all time durations during which a lock-in command was executed
 	'''
 
+	
 	ClearSwitches()
 
 

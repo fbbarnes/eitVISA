@@ -131,13 +131,8 @@ def Standard(no_electrodes, step=1, parser=None):
 
 
 def GetNextElectrodes(algorithm='Standard', no_electrodes=32, all_measurement_electrodes=None, measurement=0, **algorithm_parameters):
-
+    
     '''
-    Returns electrode connections (eg sin+:2, sin-:1, v+: 18, v-:17 given algorithm used 
-    and required information eg measurement no. or previous measurement. In order of sin+, sin-, v+, v-.
-    If a list of electrodes are already given, it simply returns the nth element in that array. 
-    '''
-        '''
     Inputs
     ------
     algorithm: str
@@ -158,6 +153,12 @@ def GetNextElectrodes(algorithm='Standard', no_electrodes=32, all_measurement_el
         4*N array of electrode positions to take next measurement from
     not_last_measurement: bool
         If no more measurements should be taken not_last_measurement=False, otherwise if more measurements should be taken not_last_measurement=True
+    
+    Notes
+    ------
+    Returns electrode connections (eg sin+:2, sin-:1, v+: 18, v-:17 given algorithm used 
+    and required information eg measurement no. or previous measurement. In order of sin+, sin-, v+, v-.
+    If a list of electrodes are already given, it simply returns the nth element in that array. 
     '''
     not_last_measurement = True
     next_electrodes = np.zeros(4)
@@ -179,9 +180,9 @@ def GetNextElectrodes(algorithm='Standard', no_electrodes=32, all_measurement_el
         rng = random.default_rng()
         next_electrodes = rng.choice(no_electrodes-1, size=4, replace=False)
 
-    if algorithm == 'ESA':
-        #GetNextElectrodes(*algorithm_parameters)
-
+    #if algorithm == 'ESA':
+    #GetNextElectrodes(*algorithm_parameters)
+    
     return next_electrodes, not_last_measurement
 
 '''
