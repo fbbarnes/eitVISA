@@ -274,7 +274,7 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 
 		'''
 	Inputs
-    ------ 
+	------ 
 	algorithm: str
 		Specifies electrode selection agolrithm. eg 'Standard' for adj-adj or 'Random' for radnom electrode placements. 
 	no_electrodes: int
@@ -287,7 +287,7 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 	algorithm_parameters: **kwargs
         Allows user to pass relevant parameters of desired algorithm
 	Outputs
-    ------ 
+	------ 
 	v_difference: NDarray
 		1*N float array of all voltage measurements taken
 	flick_times_np: NDarray 
