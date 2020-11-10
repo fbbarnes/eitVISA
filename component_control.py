@@ -136,17 +136,17 @@ def GetMeasurement(parameters=None, param_set=True):
 
 	'''
 	Inputs
-    ------ 
+	------ 
 	parameters: list of str 
 		corresponding to parameters desired to be measured by lock-in SR860. If none, defaults to R, THeta, SAMp, FInt
 	param_set: bool. 
 		If true, set the parameters to be measured. If false, take measurement using previously set parameters (Speeds up measurement by ~0.03s)
 	Outputs
-    ------  
+	------  
 	measurement_array: NDarray
 		Array of floats corresponding to mesaurment values in Volts, Hz or Degrees. Ordered in same order as specified in parameters.
 	Notes
-    ------
+	------
 	Uses SNAPD? lockin-command
 	'''
 	if param_set == True:
@@ -160,7 +160,7 @@ def FlickSwitch(state, module, relay):
 
 	'''
 	Inputs
-    ------  
+	------  
 	state: str or int
 		State to change switch to. 'on' (0) or 'off' (1).
 	module: int
@@ -169,11 +169,11 @@ def FlickSwitch(state, module, relay):
 		Relay(aka switch) number of desired switch within module.
 
 	Outputs
-    ------  
+	------  
 	None
 
 	Notes
-    ------  
+	------  
 	Sends message to switchbox to change state of switch according to 
 	state given by string ('on' or 'off') or int (0 or 1). Switch corresponds to
 	relay within module.
@@ -194,14 +194,14 @@ def FlickSwitch(state, module, relay):
 def MapSwitches(electrode, lockin_connection):
 	'''
 	Inputs
-    ------ 
+	------ 
 	electrode: int
 		Electrode number corresponding to numbering on output of switchbox.
 	lockin_connection: str or int
 		Relevant lock-in connnection ("sin+" or 0,"sin-" or 1,"v+" or 2,"v-" or 3)
 
 	Outputs
-    ------ 
+	------ 
 	module: int
 		Module number corresponding to relay needed to connect electrode to lockin_connection
 	relay: int
