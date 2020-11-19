@@ -45,6 +45,7 @@ import pyvisa
 import numpy as np
 from numpy import random
 import time
+from datetime import datetime
 from selection_algorithms import *
 
 #SET DEVICE IP AND PORT
@@ -124,7 +125,7 @@ def SetMeasurementParameters(parameters):
 
 	'''
 	if parameters == None:
-		parameters = ["R","THeta","SAMp","FInt"]
+		parameters = ["X","THeta","XNoise","FInt"]
 		
 	channel = 1
 	for i in range(0, min(4, len(parameters))):
@@ -187,7 +188,7 @@ def FlickSwitch(state, module, relay):
 		print("Must include switch state. 0(open) 1(closed)")
 		return
 	
-	switch.write(state_str+str(module)+" "+str(relay))
+	switch.write(state_str+str(relay)+" "+str(module))
 	
 	return 
 
@@ -211,7 +212,7 @@ def MapSwitches(electrode, lockin_connection):
 		lockin_connection = {'sin+':0, 'sin-':1, 'v+':2, 'v-':3}
 
 	relay = electrode % 16
-	module = ( electrode // 16 ) + lockin_connection
+	module = ((electrode // 16) * 8)+ lockin_connection
 
 
 	return module, relay
@@ -270,7 +271,8 @@ def eit_scan_lines(ne=16, dist=1):
 
 
 
-def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measurement_electrodes = None, **algorithm_parameters):
+def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=10000, measurement_electrodes = None, 
+			print_status=True, voltage=2, freq=30, wait=60, tc=12, **algorithm_parameters):
 
 
 	'''
@@ -285,8 +287,22 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 	measurement_electrodes: NDarray
 		A 4*N array of electrode positions for all measurements. Allows user to pre-generate desired electrode positions instead of using algorithm.
 		Helps to speed up when using Standard algorithm.
+	voltage: float
+		Voltage of lock-in driving signal in Volts rms. Default 2V.
+	freq: int
+		Frequency of lock-in driving signal in Hz. Default 30Hz.
+	tc: int
+		Time constant used by lock-in amplifer. Corresponds to OFLT command fpr SR865 lock-in.
+		0->1us, 1->3us, 2->10us, 3->30us, 4->100us, 5->300us,... 20->10ks, 21->30ks.
+		Default 12->1s.
+	wait: int	
+		Time to wait between measurements divided by (1/f) of driving frequency ie no. of periods.
+		Default 60, ie 2s for 30Hz.  
+	print_status: bool
+		Sets whether to print status messages
 	algorithm_parameters: **kwargs
 		Allows user to pass relevant parameters of desired algorithm
+	
 	Outputs
 	------ 
 	v_difference: NDarray
@@ -296,28 +312,34 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 	get_times_np: NDarray
 		Float array of all time durations during which a lock-in command was executed
 	'''
+	if print_status:
+		print("starting EIT...")
+		start = time.time()
 
-	
 	ClearSwitches()
 
+	SetMeasurementParameters(["X","THeta","XNoise","FInt"])
+	lockin.write("SLVL " + str(voltage))
+	lockin.write("FREQ " + str(freq)) 	#frequency
+	lockin.write("OFLT " + str(tc)) #time constant 11 = 300ms, 12 = 1s
+	lockin.write("PHAS 0") #set phase offset to 0
+	lockin.write("ASCL") #autoscale
 
 	#standard_measurement_electrodes = Standard(no_electrodes=no_electrodes, step=1,parser='fmmu')
 
-	#print(standard_measurement_electrodes)
-
-
-	keep_measuring = True
-
-	if max_measurements == None:
-		max_measurements = 10000
+	#print(standard_measurement_electrodes)	
 
 	v_diff = []
+	electrode_posns =[]
 	flick_times = []
 	get_times = []
 
+	keep_measuring = True
+
 	while keep_measuring == True:
 		for i in range(0,max_measurements):
-
+			
+			print("Measurement", i)
 			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i, all_measurement_electrodes = None)
 			#print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
 			if keep_measuring == False:
@@ -328,52 +350,105 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=None, measur
 			end_clear = time.time()
 			clear_time = end_clear - start_clear
 			flick_times.append(clear_time)
-			for i in range(0, len(next_electrodes)):
-				module, relay = MapSwitches(electrode=next_electrodes[i], lockin_connection=i)
-				start_flick = time.time()
-				FlickSwitch('on', module, relay)
-				end_flick = time.time()
-				flick_time = end_flick - start_flick
-				flick_times.append(flick_time)
-			start_get =time.time()
-			r, theta, samp, fint = GetMeasurement(param_set=False)
-			end_get = time.time()
-			get_time = end_get - start_get
-			get_times.append(get_time)
-			v_diff.append(r)
+
+			#next_electrodes = np.random.randint(no_electrodes, size=(2,4))
+
+			try:
+				next_electrodes_shape = (next_electrodes.shape[0],  next_electrodes.shape[1])
+			except IndexError:
+				next_electrodes_shape = (1, next_electrodes.shape[0])
+				
+			'''
+			try: 
+				print("next .shpae", next_electrodes.shape[1])
+			except IndexError:
+				print("index error")
+
+
+			print("next electrode shape", next_electrodes_shape)
+			'''
+
+			for i in range(0, next_electrodes_shape[0]):
+				for j in range(0, next_electrodes_shape[1]):
+
+					try:
+						module, relay = MapSwitches(electrode=next_electrodes[i][j], lockin_connection=i)
+					except IndexError:
+						module, relay = MapSwitches(electrode=next_electrodes[j], lockin_connection=i)
+
+					start_flick = time.time()
+					FlickSwitch('on', module, relay)
+					end_flick = time.time()
+					flick_time = end_flick - start_flick
+					flick_times.append(flick_time)
+				start_get =time.time()
+				time.sleep(wait * (1/freq))
+				x, theta, xnoise, fint = GetMeasurement(param_set=False)
+				end_get = time.time()
+				get_time = end_get - start_get
+				get_times.append(get_time)
+				v_diff.append(x)
+				#print("i", i)
+				#print('next electrodse[j]', next_electrodes[i])
+				
+				try:
+					electrode_posns.append(next_electrodes[i,:])
+				except IndexError:
+					electrode_posns.append(next_electrodes)
+		
 		
 		v_difference = np.array(v_diff)
+		electrode_positions = np.array(electrode_posns)
 		
 		flick_times_np = np.array(flick_times)
 		get_times_np = np.array(get_times)
 		break
 
-	return v_difference, flick_times_np, get_times_np
+	if print_status:
+		end = time.time()
+		duration = end - start
+		no_voltages = len(v_difference)
+		average_time = duration / no_voltages
+		print("EIT finished")
+		print("Voltages: ", v_difference)
+		print("Positions:", electrode_positions)
+		print(str(no_voltages)+" measurements taken in "+str(duration)+" seconds.")
+		print("Average time for measurement: ", average_time)
+		total_switch_time = np.sum(flick_times_np)
+		average_switch_time = np.mean(flick_times_np)
 
-start = time.time()
-voltages, switch_times, lockin_times = RunEIT(no_electrodes=8, algorithm='Random', max_measurements=100)
-end = time.time()
-duration = end - start
-no_voltages = len(voltages)
-average_time = duration / no_voltages
-print("Voltages: ", voltages)
-print(str(no_voltages)+" measurements taken in "+str(duration)+" seconds.")
-print("Average time for measurement: ", average_time)
+		print("Switch commands: ", len(flick_times_np))
+		print("Total switch time", total_switch_time)
+		print("Average switch time", average_switch_time)
 
-total_switch_time = np.sum(switch_times)
-average_switch_time = np.mean(switch_times)
+		total_lockin_time = np.sum(get_times_np)
+		average_lockin_time = np.mean(get_times_np)
 
-print("switch commands: ", len(switch_times))
-print("Total switch time", total_switch_time)
-print("Average switch time", average_switch_time)
+		print("Lock-in commands: ", len(get_times_np))
+		print("Total lock-in time", total_lockin_time)
+		print("Average lock-in time", average_lockin_time)
 
-total_lockin_time = np.sum(lockin_times)
-average_lockin_time = np.mean(lockin_times)
+	return v_difference, electrode_positions, flick_times_np, get_times_np
 
-print("Lock-in commands: ", len(lockin_times))
-print("Total lock-in time", total_lockin_time)
-print("Average lock-in time", average_lockin_time)
+def TimeStamp(fname, fmt='%Y-%m-%d-%H-%M-%S_{fname}'):
+    return datetime.now().strftime(fmt).format(fname=fname)
 
+def SaveEIT(positions, voltages, filename):
+
+	print("Saving...")
+	date_time = datetime.now()
+	filename = TimeStamp(filename+".csv")
+	data = [positions[:,0], positions[:,1], positions[:,2] ,positions[:,3], voltages]
+	data = np.asarray(data).T
+	np.savetxt(filename, data, fmt=['%i', '%i', '%i', '%i', '%e'], delimiter=",", header="sin+,sin-,v_high,v_low,voltage", comments="")
+	print("File saved as", str(filename))
+
+	return filename
+
+if  __name__ == "__main__":
+	voltages, positions, switch_times, lockin_times = RunEIT(no_electrodes=32, algorithm='Standard')
+
+	SaveEIT(positions, voltages, "resitor_grid")
 '''
 #initialise devices
 #open all switches
