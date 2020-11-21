@@ -92,7 +92,7 @@ def voltage_meter(ex_line, n_el=16, step=1, parser=None):
     diff_pairs = np.array(v)
     return diff_pairs
 
-def Standard(no_electrodes, step=1, parser=None):
+def Standard(no_electrodes, step=1, parser=None, dist=1):
     '''
     Inputs
     ------
@@ -116,7 +116,7 @@ def Standard(no_electrodes, step=1, parser=None):
         sin+, sin-, v+, v-
     '''
     #print(parser)
-    scan_lines = eit_scan_lines(no_electrodes)
+    scan_lines = eit_scan_lines(no_electrodes, dist=dist)
 
 
     electrodes = []

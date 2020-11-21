@@ -198,8 +198,8 @@ def MapSwitches(electrode, lockin_connection):
 	------ 
 	electrode: int
 		Electrode number corresponding to numbering on output of switchbox.
-	lockin_connection: str or int
-		Relevant lock-in connnection ("sin+" or 0,"sin-" or 1,"v+" or 2,"v-" or 3)
+	lockin_connection: str
+		Relevant lock-in connnection ("sin+" is 0,"sin-" is 1,"v+" is 2,"v-" is 3)
 
 	Outputs
 	------ 
@@ -208,14 +208,14 @@ def MapSwitches(electrode, lockin_connection):
 	relay: int
 		Relay number within module needed to connect electrode to lockin_connection
 	'''
-	if lockin_connection is str:
-		lockin_connection = {'sin+':0, 'sin-':1, 'v+':2, 'v-':3}
 
 	relay = electrode % 16
 	module = ((electrode // 16) * 8)+ lockin_connection
 
 
 	return module, relay
+
+
 
 def ClearSwitches():
 	'''
@@ -340,7 +340,7 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=10000, measu
 		for i in range(0,max_measurements):
 			
 			print("Measurement", i)
-			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i, all_measurement_electrodes = None)
+			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i, all_measurement_electrodes = None, **algorithm_parameters)
 			#print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
 			if keep_measuring == False:
 				break
@@ -374,14 +374,19 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=10000, measu
 					try:
 						module, relay = MapSwitches(electrode=next_electrodes[i][j], lockin_connection=i)
 					except IndexError:
-						module, relay = MapSwitches(electrode=next_electrodes[j], lockin_connection=i)
+						module, relay = MapSwitches(electrode=next_electrodes[j], lockin_connection=j)
+						#print("next electrodes, j ", next_electrodes[j])
 
 					start_flick = time.time()
+					#print("module", module)
+					#print("relay", relay)
 					FlickSwitch('on', module, relay)
 					end_flick = time.time()
 					flick_time = end_flick - start_flick
 					flick_times.append(flick_time)
 				start_get =time.time()
+				#switch_status = switch.query('S')
+				#print(switch_status)
 				time.sleep(wait * (1/freq))
 				x, theta, xnoise, fint = GetMeasurement(param_set=False)
 				end_get = time.time()
@@ -436,7 +441,6 @@ def TimeStamp(fname, fmt='%Y-%m-%d-%H-%M-%S_{fname}'):
 def SaveEIT(positions, voltages, filename):
 
 	print("Saving...")
-	date_time = datetime.now()
 	filename = TimeStamp(filename+".csv")
 	data = [positions[:,0], positions[:,1], positions[:,2] ,positions[:,3], voltages]
 	data = np.asarray(data).T
@@ -446,9 +450,9 @@ def SaveEIT(positions, voltages, filename):
 	return filename
 
 if  __name__ == "__main__":
-	voltages, positions, switch_times, lockin_times = RunEIT(no_electrodes=32, algorithm='Standard')
+	voltages, positions, switch_times, lockin_times = RunEIT(no_electrodes=32, algorithm='Standard', freq=30,tc=13,wait=300,step=16, dist=16)
 
-	SaveEIT(positions, voltages, "resitor_grid")
+	SaveEIT(positions, voltages, "resitor_grid_30Hz-tc13-wait300-step16-dist16")
 '''
 #initialise devices
 #open all switches
