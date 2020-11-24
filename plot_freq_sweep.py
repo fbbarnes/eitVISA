@@ -34,10 +34,17 @@ def PlotSweepSingle(filename, point):
 
     fig, ax = plt.subplots()
     
-    ax.scatter(freqs, voltage, label='Voltage')
-    ax.scatter(freqs, theta_abs, label='|Phase|')
+    ax.scatter(freqs, voltage, color='blue', label='Voltage')
+    ax.set_xlim(0, 400)
+    ax.set_ylim(170, 180)
+    ax.set_xlabel("Frequency (Hz)")
+    ax2 = ax.twinx()
+    #ax2.set_ylim()
+    ax2.set_ylabel("Voltage")
+    ax2.scatter(freqs, theta_abs, color='orange', label='|Phase|')
+    ax2.set_ylabel("Mean Phase (°)")
 
-    ax.legend()
+    #ax.legend()
     ax.grid(True)
 
     plt.show()
@@ -54,10 +61,17 @@ def PlotSweepSingleAverage(filename):
 
     fig, ax = plt.subplots()
     
-    ax.scatter(freqs, voltage_mean, label='Mean Voltage')
-    ax.scatter(freqs, theta_abs_mean, label='Mean |Phase|')
+    ax.scatter(freqs, voltage_mean,  color='blue', label='Mean Voltage')
+    ax.set_xlim(0, 400)
+    ax.set_ylim(-0.00103, -0.00087)
+    ax.set_xlabel("Frequency (Hz)", )
+    ax.set_ylabel("Mean Voltage (V)", color='blue')
+    ax2 = ax.twinx()
+    ax2.set_ylim(174, 180)
+    ax2.set_ylabel("Mean Phase (°)", color='orange')    
+    ax2.scatter(freqs, theta_abs_mean, color='orange', label='Mean |Phase|')    
 
-    ax.legend()
+    #ax.legend()
     ax.grid(True)
 
     plt.show()

@@ -175,13 +175,16 @@ def GetNextElectrodes(algorithm='Standard', no_electrodes=32, all_measurement_el
         if not_last_measurement == True:
             next_electrodes = all_measurement_electrodes[measurement]
 
+    
+
 
     if algorithm == 'Random':
         rng = random.default_rng()
         next_electrodes = rng.choice(no_electrodes-1, size=4, replace=False)
 
-    #if algorithm == 'ESA':
-    #GetNextElectrodes(*algorithm_parameters)
+    if algorithm == 'ESA':
+        
+        #GetNextElectrodes(*algorithm_parameters)
     
     return next_electrodes, not_last_measurement
 

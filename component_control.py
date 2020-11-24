@@ -68,22 +68,14 @@ switch_primary_address = '7'
 #create devices (resources) address strings
 switch_address = 'GPIB0::'+switch_primary_address+'::INSTR'
 lockin_address = 'TCPIP::'+lockin_ip+'::'+lockin_lan_devicename+'::'+'INSTR'
-
-
-#create resource manager using py-visa backend ('@py') leave empty for NI VIS
-rm = pyvisa.ResourceManager()
+rm = pyvisa.ResourceManager() #create resource manager using py-visa backend ('@py') leave empty for NI VIS
 #print available devices (resources)
 print(rm.list_resources())
-
-#connect to devices
-switch = rm.open_resource(switch_address)
+switch = rm.open_resource(switch_address) #connect to devices
 lockin = rm.open_resource(lockin_address)
-
 #set termination characters
-#switch
 switch.read_termination = '\n' #cytech manual says 'enter' so try \n, \r or combination of both
 switch.write_termination = '\n'
-#lockin
 #lockin.read_termination = '\f' #SR860 manual says \lf so \f seems to be equivalent in python)
 lockin.write_termination = '\f'
 
@@ -187,10 +179,8 @@ def FlickSwitch(state, module, relay):
 	else:
 		print("Must include switch state. 0(open) 1(closed)")
 		return
-	
 	switch.write(state_str+str(relay)+" "+str(module))
-	
-	return 
+	return 0
 
 def MapSwitches(electrode, lockin_connection):
 	'''
@@ -208,11 +198,8 @@ def MapSwitches(electrode, lockin_connection):
 	relay: int
 		Relay number within module needed to connect electrode to lockin_connection
 	'''
-
 	relay = electrode % 16
 	module = ((electrode // 16) * 8)+ lockin_connection
-
-
 	return module, relay
 
 
@@ -221,17 +208,13 @@ def ClearSwitches():
 	'''
 	Opens all switches in switchbox
 	'''
-
 	switch.write('C')
-
 	return
 
 def eit_scan_lines(ne=16, dist=1):
 	"""
-
 	TAKEN FROM pyeit.eit.utils.py
-
-	generate scan matrix
+	Generates an excitation scan matrix of current and voltage electrode pairs.
 	Parameters
 	----------
 	ne: int
@@ -265,7 +248,6 @@ def eit_scan_lines(ne=16, dist=1):
 	to global index using the (global) el_pos parameters.
 	"""
 	ex = np.array([[i, np.mod(i + dist, ne)] for i in range(ne)])
-
 	return ex
 
 
@@ -273,8 +255,6 @@ def eit_scan_lines(ne=16, dist=1):
 
 def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=10000, measurement_electrodes = None, 
 			print_status=True, voltage=2, freq=30, wait=60, tc=12, **algorithm_parameters):
-
-
 	'''
 	Inputs
 	------ 
@@ -317,28 +297,22 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=10000, measu
 		start = time.time()
 
 	ClearSwitches()
-
 	SetMeasurementParameters(["X","THeta","XNoise","FInt"])
 	lockin.write("SLVL " + str(voltage))
-	lockin.write("FREQ " + str(freq)) 	#frequency
-	lockin.write("OFLT " + str(tc)) #time constant 11 = 300ms, 12 = 1s
-	lockin.write("PHAS 0") #set phase offset to 0
-	lockin.write("ASCL") #autoscale
-
+	lockin.write("FREQ " + str(freq)) 	# frequency
+	lockin.write("OFLT " + str(tc)) # time constant 11 = 300ms, 12 = 1s
+	lockin.write("PHAS 0") # set phase offset to 0
+	lockin.write("ASCL") # autoscale
 	#standard_measurement_electrodes = Standard(no_electrodes=no_electrodes, step=1,parser='fmmu')
-
 	#print(standard_measurement_electrodes)	
-
 	v_diff = []
 	electrode_posns =[]
 	flick_times = []
 	get_times = []
-
 	keep_measuring = True
 
 	while keep_measuring == True:
 		for i in range(0,max_measurements):
-			
 			print("Measurement", i)
 			next_electrodes, keep_measuring = GetNextElectrodes(algorithm=algorithm, no_electrodes=no_electrodes, measurement=i, all_measurement_electrodes = None, **algorithm_parameters)
 			#print("measurement "+str(i)+", next electrode "+str(next_electrodes)+"keep measuring:"+str(keep_measuring))
@@ -350,27 +324,20 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=10000, measu
 			end_clear = time.time()
 			clear_time = end_clear - start_clear
 			flick_times.append(clear_time)
-
 			#next_electrodes = np.random.randint(no_electrodes, size=(2,4))
-
 			try:
 				next_electrodes_shape = (next_electrodes.shape[0],  next_electrodes.shape[1])
 			except IndexError:
 				next_electrodes_shape = (1, next_electrodes.shape[0])
-				
 			'''
 			try: 
 				print("next .shpae", next_electrodes.shape[1])
 			except IndexError:
 				print("index error")
-
-
 			print("next electrode shape", next_electrodes_shape)
 			'''
-
 			for i in range(0, next_electrodes_shape[0]):
 				for j in range(0, next_electrodes_shape[1]):
-
 					try:
 						module, relay = MapSwitches(electrode=next_electrodes[i][j], lockin_connection=i)
 					except IndexError:
@@ -382,12 +349,11 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=10000, measu
 					#print("relay", relay)
 					FlickSwitch('on', module, relay)
 					end_flick = time.time()
-					flick_time = end_flick - start_flick
-					flick_times.append(flick_time)
+					flick_times.append(end_flick - start_flick)
 				start_get =time.time()
 				#switch_status = switch.query('S')
 				#print(switch_status)
-				time.sleep(wait * (1/freq))
+				time.sleep(wait * (1/freq)) # Wait to let lockin settle down - may not be nesceaary
 				x, theta, xnoise, fint = GetMeasurement(param_set=False)
 				end_get = time.time()
 				get_time = end_get - start_get
@@ -404,7 +370,6 @@ def RunEIT(algorithm='Standard', no_electrodes=32, max_measurements=10000, measu
 		
 		v_difference = np.array(v_diff)
 		electrode_positions = np.array(electrode_posns)
-		
 		flick_times_np = np.array(flick_times)
 		get_times_np = np.array(get_times)
 		break
