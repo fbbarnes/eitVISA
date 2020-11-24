@@ -49,6 +49,40 @@ def PlotSweepSingle(filename, point):
 
     plt.show()
 
+def PlotSweepSingleXY(filename, point):
+    
+    sweep_data = np.load(filename)
+    freqs = sweep_data['freqs']
+    x = np.abs(sweep_data['x'][point,:])
+    y = np.abs(sweep_data['y'][point,:])
+    cos = (x)/np.sqrt(x**2+y**2)
+    ratio1 = (x-y)/(x+y)
+
+    print("x", x)
+    print("y", y)
+    print("cos", cos)
+
+
+    fig, ax = plt.subplots()
+    
+    ax.scatter(freqs, x, color='blue', label='x')
+    #ax.set_xlim(0, 3e5)
+    #ax.set_ylim(170, 180)
+    ax.set_xlabel("Frequency (Hz)")
+    ax.scatter(freqs, y, color='orange', label='y')
+
+    fig2, ax2 = plt.subplots()
+    #ax2.set_ylim()
+    
+    ax2.set_ylabel("metrics")
+    ax2.scatter(freqs, cos, color='red', label='cos')
+    ax2.scatter(freqs, ratio1, color='green', label='ratio')
+
+    ax.legend()
+    ax.grid(True)
+
+    plt.show()
+
 def PlotSweepSingleAverage(filename):
     
     sweep_data = np.load(filename)
@@ -71,13 +105,18 @@ def PlotSweepSingleAverage(filename):
     ax2.set_ylabel("Mean Phase (°)", color='orange')    
     ax2.scatter(freqs, theta_abs_mean, color='orange', label='Mean |Phase|')    
 
-    #ax.legend()
+    ax.legend()
     ax.grid(True)
 
     plt.show()
 
 
-filename = "2020-11-19-17-57-23_freq_sweep-.npz"
+
+
+
+
+filename = "2020-11-24-13-02-28_freq_sweep-.npz"
 PlotSweep(filename)
-PlotSweepSingle(filename, 0)
-PlotSweepSingleAverage(filename)
+#PlotSweepSingle(filename, 0)
+#PlotSweepSingleAverage(filename)
+PlotSweepSingleXY(filename, 0)
