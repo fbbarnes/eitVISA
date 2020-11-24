@@ -65,21 +65,26 @@ def PlotSweepSingleXY(filename, point):
 
     fig, ax = plt.subplots()
     
-    ax.scatter(freqs, x, color='blue', label='x')
+    ax.scatter(freqs, x, marker='x', color='blue', label='x')
     #ax.set_xlim(0, 3e5)
     #ax.set_ylim(170, 180)
     ax.set_xlabel("Frequency (Hz)")
-    ax.scatter(freqs, y, color='orange', label='y')
+    ax.scatter(freqs, y, marker='x', color='orange', label='y')
+    ax.tick_params(which='both', width=2)
+    ax.legend()
+    ax.grid(True)
 
     fig2, ax2 = plt.subplots()
     #ax2.set_ylim()
     
-    ax2.set_ylabel("metrics")
-    ax2.scatter(freqs, cos, color='red', label='cos')
-    ax2.scatter(freqs, ratio1, color='green', label='ratio')
+    ax2.set_ylabel("")
+    ax2.set_xlabel("Frequency (Hz)")
+    ax2.scatter(freqs, cos, marker='x', color='red', label='cosθ = x/sqrt(x^2 + y^2)')
+    ax2.scatter(freqs, ratio1, marker='x', color='green', label='(x-y)/(x+y)')
+    ax2.tick_params(which='both', width=2)
 
-    ax.legend()
-    ax.grid(True)
+    ax2.legend()
+    ax2.grid(True)
 
     plt.show()
 
@@ -115,7 +120,7 @@ def PlotSweepSingleAverage(filename):
 
 
 
-filename = "2020-11-24-13-02-28_freq_sweep-.npz"
+filename = "2020-11-24-18-17-38_freq_sweep-.npz"
 PlotSweep(filename)
 #PlotSweepSingle(filename, 0)
 #PlotSweepSingleAverage(filename)

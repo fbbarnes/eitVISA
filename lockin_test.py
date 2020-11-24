@@ -6,6 +6,7 @@ from datetime import datetime
 from selection_algorithms import *
 from component_control import SetMeasurementParameters, MapSwitches, FlickSwitch, ClearSwitches, GetMeasurement, TimeStamp
 
+
 #SET DEVICE IP AND PORT
 #lock-in amplifier
 lockin_ip = '169.254.147.1'
@@ -91,6 +92,18 @@ def SideInidices(no_electrodes):
 
     return posns
 
+def TwoPointIndices(no_electrodes):
+
+    posns = np.zeros((no_electrodes, 4))
+
+    for j in range(0, no_electrodes):
+        posns[j,0] = j
+        posns[j,1] = (j+1) % 32
+        posns[j,2] = (j) % 32 
+        posns[j,3] = (j+1) % 32
+
+    return posns
+
 
 print(SideInidices(32))
 
@@ -138,7 +151,20 @@ def Measure(posns, voltage=2, freq=30, tc=11, wait=60):
         
 
     return x, theta, y, fint
+'''
+def TwoPointMeasurement(posns, tcs, voltage, wait):
 
+    x = np.zeros((len(posns), len(freqs)))
+    theta = np.zeros((len(posns), len(freqs)))
+    y = np.zeros((len(posns), len(freqs)))
+    fint = np.zeros((len(posns), len(freqs)))
+
+    for i in range(0, len(posns)):
+
+        x[:,i], theta[:,i], y[:,i], fint[:,i] = Measure(posns = posns, voltage=voltage, freq=freqs[i], tc=tcs[i], wait=wait)
+
+    return x, theta, y, fint
+'''
 def FreqSweep(posns, freqs, tcs, voltage, wait=60):
 
     x = np.zeros((len(posns), len(freqs)))
@@ -155,7 +181,7 @@ def FreqSweep(posns, freqs, tcs, voltage, wait=60):
 
 
 
-if __name__ == "__main__":
+def RunSweep():
 
     #frequencies = np.array( [5, 10,20,30,40,50,70,1e2,1.5e2,2e2,3e2,6e2,1e3,2e3,3e3,1e4,3e4,1e5,3e5])
     #tcs = np.array(         [13,13,12,12,11,11,11,11, 10,   10, 10, 9,  9,  8,  8,  7,  6,  5,  4])
@@ -164,8 +190,8 @@ if __name__ == "__main__":
     100, 150, 250,
     3e2, 6e2, 9e2,
     1e3, 1.5e3, 2e3,
-    3e3, 6e3, 9e3,
-    1e4, 1.5e4, 2e4,
+    3e3, 5e3, 6e3, 7e3, 8e3, 8.5e3, 9e3,
+    1e4, 1.2e4, 1.5e4, 2e4,
     3e4, 6e4, 9e2,
     1e5, 1.5e5, 2e5,
     3e5])
@@ -173,18 +199,18 @@ if __name__ == "__main__":
     12,12,12,
     11,11,11,
     10,10,10,
-    9,9,9,  
-    8,8,8,
+    9,9,9,9,9,9,9,  
+    8,8,8,8,
     7,7,7,
     6,6,6,
     5,5,5, 
     4])
 
-    tcs = tcs + 1
+    tcs = tcs
     #frequencies = np.array([1e5,3e5])
     #tcs = np.array([5,4])
     
-    wait = 120 #time to wait between measurements divided by (1/f) of driving frequency ie no. of periods
+    wait = 100 #time to wait between measurements divided by (1/f) of driving frequency ie no. of periods
 
     voltage = 2
     #positions = SideInidices(32)
@@ -203,15 +229,15 @@ if __name__ == "__main__":
         theta_array.append(theta)
         fint_array.append(fint)
 
-    x= np.asarry(x_array)
+    x= np.asarray(x_array)
     y_array = np.asarray(y_array)
     theta_array = np.asarray(theta_array)
     fint_array = np.asarray(fint_array)
 
-    x = np.mean(x_array)
-    y = np.mean(y_array)
-    theta = np.mean(theta_array)
-    fint = np.mean(fint_array)
+    x = np.mean(x_array, axis=0)
+    y = np.mean(y_array, axis=0)
+    theta = np.mean(theta_array, axis=0)
+    fint = np.mean(fint_array, axis=0)
     
     filename = "freq_sweep-"
     for i in range(0, len(frequencies)):
@@ -227,7 +253,48 @@ if __name__ == "__main__":
     print(filename_npz)
     print(freq_sweep_data['x'][:,0])
 
+    return
+
+def RunTwoPointMeasurement(posns, voltage, freq, tc, wait):
+
+    x = np.zeros(len(posns))
+    theta = np.zeros(len(posns))
+    y = np.zeros(len(posns))
+    fint = np.zeros(len(posns))
+
+
+
+    x, theta, y, fint = Measure(posns = posns, voltage=voltage, freq=freq, tc=tc, wait=wait)
+
+    filename = "two-point"
+    filename_csv = TimeStamp(filename+".csv")
+    data = [x, theta,  y, fint, posns[:,0], posns[:,1], posns[:,2], posns[:,3]]
+    data = np.asarray(data).T
+    np.savetxt(filename_csv, data, fmt=['%e', '%e', '%e', '%e', '%i', '%i', '%i', '%i'], delimiter=",", header="[x,theta, y,fint,sin+,sin-,v+,v-]", comments="Hz wait="+str(wait)+"periods"+" tc="+str(tc))
     
+    filename_npz = TimeStamp(filename+".npz")
+    np.savez(filename_npz, x=x, theta=theta, y=y, fint=fint, posns=positions, tcs=tc, freqs=freq)
+    two_point_data = np.load(filename_npz)
+    print(filename_npz)
+    print(two_point_data['x'])
+
+    return filename_npz
+
+positions = TwoPointIndices(32)
+V =2
+Rin = 100e3
+filename_npz = RunTwoPointMeasurement(voltage=V, posns=positions, freq=5000, tc=9, wait=100)
+
+two_point_data = np.load(filename_npz)
+print(filename_npz)
+print(two_point_data['x'])
+x = two_point_data['x']
+
+I = V/Rin
+R = x / I
+for i in x:
+    print("electrode "+str(i)+" R = "+str(R)+"ohm")    
+
 '''
     
 
