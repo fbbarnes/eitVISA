@@ -1,6 +1,9 @@
 
 import numpy as np
 import numpy.random as random
+#from AdaptiveESA.get_next_prediction import adaptive_ESA_single_interation as adaptive_ESA
+#from AdaptiveESA.get_next_prediction import initialise_ex_volt_mat
+#from AdaptiveESA.meshing import mesh
 
 
 def eit_scan_lines(ne=16, dist=1):
@@ -183,9 +186,16 @@ def GetNextElectrodes(algorithm='Standard', no_electrodes=32, all_measurement_el
         next_electrodes = rng.choice(no_electrodes-1, size=4, replace=False)
 
     if algorithm == 'ESA':
-        
+        n_el = no_electrodes
+        ex_volt_mat, ex_mat, volt_mat, ind = initialise_ex_volt_mat(current_mode='poo', volt_mode='all',n_el=32,
+                                                                    ex_mat_length=10)
+        mesh_obj = mesh(n_el)
         #GetNextElectrodes(*algorithm_parameters)
-    
+        #voltages = f_sim.v #  Assigning the simulated voltages in place of real voltages
+        voltages = np.random.random(len(ex_volt_mat)) # random voltages to ensure script working
+        proposed_ex_volt_lines, ex_volt_meas, ex_mat, ind, reconstruction, total_map = adaptive_ESA(mesh_obj,
+                                                        volt_mat, ex_mat, ind, voltages, num_returned=10, n_el=32)
+        volt_mat = ex_volt_meas[:, 2:]
     return next_electrodes, not_last_measurement
 
 '''

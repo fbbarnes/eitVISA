@@ -79,6 +79,9 @@ switch.write_termination = '\n'
 #lockin.read_termination = '\f' #SR860 manual says \lf so \f seems to be equivalent in python)
 lockin.write_termination = '\f'
 
+print("switch", switch.session)
+print("lockin", lockin.session)
+lockin.flush
 def SetMeasurementParameters(parameters):
 
 	'''
